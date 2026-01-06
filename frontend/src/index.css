@@ -1,0 +1,52 @@
+/* 1. FUENTES Y VARIABLES */
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@300..700&display=swap');
+
+:root {
+  --primary: #0d47a1;       /* Azul UAGRM */
+  --secondary: #1976d2;
+  --bg-color: #f4f6f8;      /* Gris fondo */
+  --text-dark: #2c3e50;
+  --text-light: #607d8b;
+  --white: #ffffff;
+  --shadow: 0 4px 20px rgba(0,0,0,0.08); /* Sombra reutilizable */
+}
+
+/* 2. RESET */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Quicksand", sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-dark);
+  min-height: 100vh;
+}
+
+/* 3. CLASES UTILITARIAS (Para usar en cualquier componente) */
+
+/* Clase para las "Cajitas Blancas" */
+.card {
+  background-color: var(--white);
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  border: 1px solid rgba(0,0,0,0.02);
+  height: 100%; /* Para que ocupen la misma altura */
+}
+
+/* Clase para Botones bonitos */
+.btn {
+  padding: 10px 20px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+  transition: transform 0.2s, opacity 0.2s;
+}
+.btn:hover { transform: translateY(-2px); opacity: 0.9; }
+
+.btn-primary { background-color: var(--primary); color: white; }
+.btn-danger { background-color: #ef5350; color: white; }

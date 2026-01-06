@@ -1,0 +1,39 @@
+/* Contenedor Principal (Centrado) */
+.app-container {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 40px 20px;
+}
+
+/* Header */
+.app-header {
+  text-align: center;
+  margin-bottom: 50px;
+}
+
+.app-title {
+  font-size: 2.5rem;
+  color: var(--primary);
+  margin-bottom: 10px;
+  font-weight: 700;
+}
+
+.app-subtitle {
+  color: var(--text-light);
+  font-size: 1.1rem;
+}
+
+/* Grid Layout (La magia para acomodar todo) */
+.app-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 25px;
+  margin-bottom: 30px;
+  align-items: start;
+}
+
+/* El listado ocupará todo el ancho abajo */
+.app-list-section {
+  margin-top: 20px;
+}

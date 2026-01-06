@@ -1,0 +1,18 @@
+# 1. SEGURIDAD (Claves y Entornos)
+.env
+venv/
+env/
+.venv/
+
+# 2. PYTHON BASURA
+__pycache__/
+*.pyc
+
+# 3. NODE (Frontend pesado)
+node_modules/
+dist/
+.DS_Store
+
+# 4. ARCHIVOS IDE
+.vscode/
+.idea/
