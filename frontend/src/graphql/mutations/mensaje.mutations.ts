@@ -1,7 +1,8 @@
 import { gql } from '@apollo/client';
 
-export const ENVIAR_AVISO_MASIVO = gql`
-  mutation EnviarAviso($mensaje: String!) {
-    enviarAvisoMasivo(mensaje: $mensaje)
+export const ENVIAR_MASIVO = gql`
+  # carreraId es opcional (no tiene !), si no se envía va a TODOS
+  mutation EnviarAvisoMasivo($mensaje: String!, $carreraId: ID) {
+    enviarAvisoMasivo(mensaje: $mensaje, carreraId: $carreraId)
   }
 `;

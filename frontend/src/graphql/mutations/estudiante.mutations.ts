@@ -1,12 +1,15 @@
 import { gql } from '@apollo/client';
 
 export const CREAR_ESTUDIANTE = gql`
-  mutation CrearEstudiante($nombre: String!, $celular: String!, $carrera: String!) {
-    crearEstudiante(nombre: $nombre, celular: $celular, carrera: $carrera) {
+  # Recibimos carreraId como ID obligatorio (!)
+  mutation CrearEstudiante($nombre: String!, $celular: String!, $carreraId: ID!) {
+    crearEstudiante(nombre: $nombre, celular: $celular, carreraId: $carreraId) {
       id
       nombre
-      celular
-      carrera
+      # Podemos pedir la carrera de vuelta para actualizar la tabla al instante
+      carrera {
+        nombre
+      }
     }
   }
 `;

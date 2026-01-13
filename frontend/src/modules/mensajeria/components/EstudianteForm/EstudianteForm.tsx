@@ -1,91 +1,120 @@
 import { useState } from 'react';
-import { useMutation } from '@apollo/client/react';
-import { CREAR_ESTUDIANTE } from '../../../../graphql/mutations/estudiante.mutations';
-import { GET_ESTUDIANTES } from '../../graphql/queries';
+import { useMutation, useQuery } from '@apollo/client/react';
 import { toast } from 'sonner';
 
+// Importamos las Queries y Mutations
+import { CREAR_ESTUDIANTE } from '../../../../graphql/mutations/estudiante.mutations';
+import {  GET_CARRERAS } from '../../../../graphql/queries/estudiante.queries';
+
+// --- DEFINICIÓN DE TIPOS (INTERFACES) ---
+interface Carrera {
+  id: string;
+  nombre: string;
+}
+
+// Así es la respuesta que esperamos del servidor
+interface CarrerasData {
+  carreras: Carrera[];
+}
+
 export const EstudianteForm = () => {
-  // Estados para los inputs
   const [nombre, setNombre] = useState('');
   const [celular, setCelular] = useState('');
-  const [carrera, setCarrera] = useState('');
+  const [carreraId, setCarreraId] = useState('');
 
-  // Hook de mutación
-  // refetchQueries: Sirve para que cuando crees uno nuevo, la lista se actualice sola
-  const [crearEstudiante, { loading, error }] = useMutation(CREAR_ESTUDIANTE, {
-    refetchQueries: [{ query: GET_ESTUDIANTES }] 
+  // CAMBIO: En lugar de <any>, usamos <CarrerasData>
+  const { data: dataCarreras, loading: loadingCarreras } = useQuery<CarrerasData>(GET_CARRERAS);
+
+// Busca esta parte:
+  const [crearEstudiante, { loading: loadingMutation }] = useMutation(CREAR_ESTUDIANTE, {
+  // CAMBIO CLAVE: Usamos el string 'GetEstudiantes' en lugar de la variable importada
+  // Esto obliga a refrescar cualquier consulta que se llame así en toda la app
+  refetchQueries: ['GetEstudiantes'], 
+  
+  onCompleted: () => {
+    toast.success('Estudiante registrado correctamente');
+    setNombre('');
+    setCelular('');
+    setCarreraId('');
+  },
+  onError: (error) => {
+    toast.error(`Error: ${error.message}`);
+  }
   });
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Validación con mensaje de advertencia (Amarillo)
-    if (!nombre || !celular || !carrera) {
-        toast.warning("Por favor, llena todos los campos");
-        return;
+    if (!carreraId) {
+      toast.warning('Por favor selecciona una carrera');
+      return;
     }
 
-    try {
-      await crearEstudiante({ variables: { nombre, celular, carrera } });
-      setNombre('');
-      setCelular('');
-      setCarrera('');
-      
-      // ÉXITO (Verde)
-      toast.success("¡Estudiante registrado correctamente!");
-    } catch (err) {
-      console.error(err);
-      // ERROR (Rojo)
-      toast.error("Error al registrar estudiante");
-    }
+    crearEstudiante({
+      variables: {
+        nombre,
+        celular,
+        carreraId
+      }
+    });
   };
 
   return (
-    <div style={{ background: '#f8f9fa', padding: '20px', borderRadius: '8px', marginBottom: '20px', border: '1px solid #dee2e6' }}>
-      <h3 style={{ marginTop: 0, color: '#495057', textAlign: 'center', paddingBottom: '10px'}}>Registrar Nuevo Estudiante</h3>
+    <div className="space-y-4">
+      <h2 className="text-xl font-bold text-gray-800 border-b pb-2">Registrar Nuevo Estudiante</h2>
       
-      <form onSubmit={handleSubmit} style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-        <input 
-          type="text" 
-          placeholder="Nombre Completo" 
-          value={nombre}
-          onChange={(e) => setNombre(e.target.value)}
-          style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc', flex: 1 }}
-        />
-        
-        <input 
-          type="text" 
-          placeholder="Celular (ej: 591700...)" 
-          value={celular}
-          onChange={(e) => setCelular(e.target.value)}
-          style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc', flex: 1 }}
-        />
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Nombre Completo</label>
+          <input 
+            type="text" 
+            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary outline-none"
+            value={nombre}
+            onChange={(e) => setNombre(e.target.value)}
+            required
+          />
+        </div>
 
-        <input 
-          type="text" 
-          placeholder="Carrera" 
-          value={carrera}
-          onChange={(e) => setCarrera(e.target.value)}
-          style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc', flex: 1 }}
-        />
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Celular</label>
+          <input 
+            type="text" 
+            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary outline-none"
+            value={celular}
+            onChange={(e) => setCelular(e.target.value)}
+            required
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Carrera</label>
+          <select 
+            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary outline-none bg-white"
+            value={carreraId}
+            onChange={(e) => setCarreraId(e.target.value)}
+            required
+            disabled={loadingCarreras}
+          >
+            <option value="">-- Selecciona una carrera --</option>
+            {loadingCarreras && <option disabled>Cargando carreras...</option>}
+            
+            {/* TypeScript ahora sabe que 'carrera' tiene id y nombre */}
+            {dataCarreras?.carreras.map((carrera) => (
+              <option key={carrera.id} value={carrera.id}>
+                {carrera.nombre}
+              </option>
+            ))}
+          </select>
+        </div>
 
         <button 
           type="submit" 
-          disabled={loading}
-          style={{
-            background: '#28a745',
-            color: 'white',
-            border: 'none',
-            padding: '8px 15px',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontWeight: 'bold'
-          }}
+          disabled={loadingMutation}
+          className="w-full bg-primary hover:bg-primary/90 text-white font-bold py-2 px-4 rounded-lg transition-colors"
         >
-          {loading ? 'Guardando...' : 'Guardar'}
+          {loadingMutation ? 'Guardando...' : 'Registrar Estudiante'}
         </button>
+
       </form>
-      
-      {error && <p style={{ color: 'red', fontSize: '0.9em' }}>Error: {error.message}</p>}
     </div>
   );
 };
