@@ -1,15 +1,15 @@
 import { gql } from '@apollo/client';
 
-// 1. QUERY PARA OBTENER LOS DATOS DEL DASHBOARD (FILTRADOS)
+// 1. QUERY PARA OBTENER LOS DATOS DEL DASHBOARD
 export const GET_DASHBOARD_DATA = gql`
-  query GetDashboardData($facultadId: ID, $carreraId: ID) {
-    # Enviamos los filtros al backend
-    totalEstudiantes(facultadId: $facultadId, carreraId: $carreraId)
+  # Agregamos las variables $limit y $offset
+  query GetDashboardData($facultadId: ID, $carreraId: ID, $limit: Int, $offset: Int) {
     
-    # Estos siguen siendo globales
+    totalEstudiantes(facultadId: $facultadId, carreraId: $carreraId)
     totalMensajesEnviados
     
-    historialEnvios {
+    # Pasamos las variables al historial
+    historialEnvios(limit: $limit, offset: $offset) {
       id
       fechaEnvio
       mensaje
