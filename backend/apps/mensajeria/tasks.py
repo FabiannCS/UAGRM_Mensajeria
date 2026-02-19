@@ -1,60 +1,48 @@
 from celery import shared_task
+# Importamos tu servicio (asegúrate de que la ruta sea correcta)
 from .services.whatsapp_service import enviar_mensaje_whatsapp
 from .models import Estudiante, HistorialEnvios, Carrera
 
 @shared_task
 def enviar_masivo_task(mensaje_texto, carrera_id=None):
-    """
-    Tarea en Background que:
-    1. Filtra estudiantes (Todos o por Carrera).
-    2. Registra el envío en el Historial.
-    3. Envía los mensajes uno por uno.
-    """
-    
-    # 1. PREPARAR LA CONSULTA (QuerySet)
-    # Empezamos con todos los activos
+    # 1. PREPARAR CONSULTA
     estudiantes = Estudiante.objects.filter(activo=True)
-    nombre_filtro = "TODOS" # Por defecto asumimos que es para todos
+    nombre_filtro = "TODOS" 
 
-    # 2. APLICAR FILTRO (Si nos mandaron un ID de carrera)
+    # 2. APLICAR FILTRO
     if carrera_id:
-        # Filtramos la query
         estudiantes = estudiantes.filter(carrera_id=carrera_id)
-        
-        # Obtenemos el nombre de la carrera para guardarlo bonito en el historial
         try:
-            carrera_obj = Carrera.objects.get(id=carrera_id)
-            nombre_filtro = carrera_obj.nombre
-        except Carrera.DoesNotExist:
-            nombre_filtro = f"ID Desconocido ({carrera_id})"
+            nombre = Carrera.objects.get(id=carrera_id).nombre
+            nombre_filtro = nombre
+        except:
+            nombre_filtro = "Desconocido"
 
     total = estudiantes.count()
     
-    # 3. GUARDAR EN EL HISTORIAL (Auditoría)
-    # Esto es vital para saber qué pasó después
+    # 3. GUARDAR HISTORIAL
     HistorialEnvios.objects.create(
         mensaje=mensaje_texto,
         cantidad_destinatarios=total,
         filtro_aplicado=nombre_filtro
     )
 
-    print(f"🚀 INICIANDO CAMPAÑA: {nombre_filtro} | TOTAL: {total} mensajes")
+    print(f"🚀 INICIANDO ENVIO DE MENSAJES: {nombre_filtro} | TOTAL: {total}")
     
+    conteo_exitos = 0
+
+    # 4. BUCLE DE ENVÍO
     for alumno in estudiantes:
-        # 1. Copiamos el mensaje original para no modificar la plantilla base
-        mensaje_personalizado = mensaje_texto
+        # A. Personalización
+        mensaje_final = mensaje_texto
+        if "{nombre}" in mensaje_final:
+            mensaje_final = mensaje_final.replace("{nombre}", alumno.nombre)
+        if "{carrera}" in mensaje_final and alumno.carrera:
+             mensaje_final = mensaje_final.replace("{carrera}", alumno.carrera.nombre)
 
-        # 2. REEMPLAZO INTELIGENTE
-        # Si el mensaje contiene "{nombre}", lo cambiamos por el nombre del alumno
-        if "{nombre}" in mensaje_personalizado:
-            mensaje_personalizado = mensaje_personalizado.replace("{nombre}", alumno.nombre)
+        # B. Usamos el servicio externo (que ya tiene la lógica del 591)
+        if enviar_mensaje_whatsapp(alumno.celular, mensaje_final):
+            conteo_exitos += 1
         
-        # Si quieres agregar la carrera también:
-        if "{carrera}" in mensaje_personalizado and alumno.carrera:
-             mensaje_personalizado = mensaje_personalizado.replace("{carrera}", alumno.carrera.nombre)
-
-        # 3. Enviamos el mensaje YA personalizado
-        enviar_mensaje_whatsapp(alumno.celular, mensaje_personalizado)
-        
-    print("🏁 FIN DE LA CAMPAÑA MASIVA")
-    return f"Se enviaron {total} mensajes al segmento: {nombre_filtro}."
+    print("🏁 FIN DEL ENVIO DE TODOS LOS MENSAJES")
+    return f"Se enviaron {conteo_exitos} de {total} mensajes."

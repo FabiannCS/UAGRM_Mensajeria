@@ -1,30 +1,38 @@
-import requests
-import json
+import requests 
 from django.conf import settings
 
 def enviar_mensaje_whatsapp(numero, mensaje):
     """
     Envía un mensaje de texto real usando la API Cloud de WhatsApp.
+    Realiza la limpieza automática del número (agrega 591 si falta).
     """
-    # 1. Obtenemos las credenciales del archivo .env (Las configuraremos pronto)
+    # 1. Obtenemos credenciales
     token = settings.WHATSAPP_TOKEN
     id_telefono = settings.WHATSAPP_PHONE_ID
-    version = 'v17.0' # O la versión actual de la API
+    version = 'v24.0'
 
-    # 2. Preparamos la URL de Meta
+    # 2. URL de Meta
     url = f"https://graph.facebook.com/{version}/{id_telefono}/messages"
 
-    # 3. Preparamos los encabezados de seguridad
+    # 3. Encabezados
     headers = {
         "Authorization": f"Bearer {token}",
         "Content-Type": "application/json"
     }
 
-    # 4. Preparamos el cuerpo del mensaje (JSON)
-    # Nota: La API es estricta con el formato
+
+    # Quitamos espacios, símbolos '+' o guiones
+    numero_limpio = str(numero).replace('+', '').replace(' ', '').replace('-', '').strip()
+    
+    # Si tiene 8 dígitos (ej: 70012345), es Bolivia -> agregamos 591
+    if len(numero_limpio) == 8:
+        numero_limpio = f"591{numero_limpio}"
+    # -----------------------------------------------------
+
+    # 4. Cuerpo del mensaje
     payload = {
         "messaging_product": "whatsapp",
-        "to": numero, # El número debe tener código de país sin el símbolo +
+        "to": numero_limpio, # Usamos el número corregido
         "type": "text",
         "text": {
             "body": mensaje
@@ -32,12 +40,11 @@ def enviar_mensaje_whatsapp(numero, mensaje):
     }
 
     try:
-        # 5. ¡Fuego! Enviamos la petición
+        # 5. Enviamos la petición
         response = requests.post(url, headers=headers, json=payload)
         
-        # Verificamos si salió bien (Código 200 o 201)
         if response.status_code in [200, 201]:
-            print(f"✅ ÉXITO: Mensaje enviado a {numero}")
+            print(f"✅ ÉXITO: Mensaje enviado a {numero_limpio}")
             return True
         else:
             print(f"❌ ERROR META: {response.text}")
