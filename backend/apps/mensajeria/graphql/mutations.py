@@ -1,4 +1,5 @@
 import strawberry
+from typing import Optional
 from ..tasks import enviar_masivo_task
 from ..models import Estudiante, Carrera, Mensaje
 from .types import EstudianteType, MensajeType # Importamos MensajeType para el retorno
@@ -9,7 +10,7 @@ class MensajeriaMutations:
     
     # --- 1. ENVIAR AVISO MASIVO (Marketing) ---
     @strawberry.mutation
-    def enviar_aviso_masivo(self, mensaje: str, carrera_id: strawberry.ID = None) -> str:
+    def enviar_aviso_masivo(self, mensaje: str, carrera_id: Optional[strawberry.ID] = None) -> str:
         if not mensaje:
             raise Exception("El mensaje no puede estar vacío")
         
